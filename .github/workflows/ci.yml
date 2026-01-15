@@ -26,7 +26,7 @@ jobs:
           --health-retries=30
     steps:
       - name: Checkout 
-        users: actions/checkout@v4
+        uses: actions/checkout@v4
       
       - name: Setup PHP 
         users: shivammathur/setup-php@v2
