@@ -14,7 +14,7 @@ jobs:
         image: mysql:8.0
         env:
           MYSQL_ROOT_PASSWORD: root
-          MYSQL_DATABASE: trellodb_test
+          MYSQL_DATABASE: trellodb
           MYSQL_USER: trellouser
           MYSQL_PASSWORD: trellopwd
         ports:
@@ -27,7 +27,7 @@ jobs:
 
     env:
       APP_ENV: test
-      DATABASE_URL: "mysql://trellouser:trellopwd@127.0.0.1:3315/trellodb_test?serverVersion=8.0&charset=utf8mb4"
+      DATABASE_URL: "mysql://root:root@127.0.0.1:3315/trellodb?serverVersion=8.0&charset=utf8mb4"
 
     steps:
       - name: Checkout
@@ -45,15 +45,10 @@ jobs:
 
       - name: Wait for MySQL (PDO)
         run: |
-          php -r '
-          $dsn = "mysql:host=127.0.0.1;port=3315;dbname=trellodb_test;charset=utf8mb4";
-          for ($i=0; $i<30; $i++) {
-            try { new PDO($dsn, "trellouser", "trellopwd"); echo "MySQL ready\n"; exit(0); }
-            catch (Throwable $e) { sleep(2); }
-          }
-          fwrite(STDERR, "MySQL not ready\n");
-          exit(1);
-          '
+          for i in {1..30}; do
+            mysqladmin ping -h 127.0.0.1 -uroot -proot && break
+            sleep 2
+          done
 
       - name: Prepare test database
         run: |
