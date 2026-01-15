@@ -18,7 +18,7 @@ jobs:
           MYSQL_USER: trellouser
           MYSQL_PASSWORD: trellopwd 
         ports:
-          -3315:3306
+          - 3315:3306
         options: >-
           --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot"
           --health-interval=5s
