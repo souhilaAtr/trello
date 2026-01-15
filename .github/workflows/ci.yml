@@ -25,6 +25,10 @@ jobs:
           --health-timeout=3s
           --health-retries=30
 
+    env:
+      APP_ENV: test
+      DATABASE_URL: "mysql://trellouser:trellopwd@127.0.0.1:3315/trellodb_test?serverVersion=8.0&charset=utf8mb4"
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -39,24 +43,23 @@ jobs:
       - name: Install dependencies
         run: composer install --no-interaction --prefer-dist --no-progress
 
-      - name: Wait for MySQL
+      - name: Wait for MySQL (PDO)
         run: |
-          for i in {1..30}; do
-            mysqladmin ping -h 127.0.0.1 -uroot -proot && break
-            sleep 2
-          done
+          php -r '
+          $dsn = "mysql:host=127.0.0.1;port=3315;dbname=trellodb_test;charset=utf8mb4";
+          for ($i=0; $i<30; $i++) {
+            try { new PDO($dsn, "trellouser", "trellopwd"); echo "MySQL ready\n"; exit(0); }
+            catch (Throwable $e) { sleep(2); }
+          }
+          fwrite(STDERR, "MySQL not ready\n");
+          exit(1);
+          '
 
       - name: Prepare test database
-        env:
-          APP_ENV: test
-          DATABASE_URL: "mysql://trellouser:trellopwd@127.0.0.1:3315/trellodb_test?serverVersion=8.0&charset=utf8mb4"
         run: |
           php bin/console doctrine:database:create --if-not-exists
           php bin/console doctrine:schema:drop --force
           php bin/console doctrine:schema:create
 
       - name: Run tests
-        env:
-          APP_ENV: test
-          DATABASE_URL: "mysql://trellouser:trellopwd@127.0.0.1:3315/trellodb_test?serverVersion=8.0&charset=utf8mb4"
         run: php bin/phpunit
